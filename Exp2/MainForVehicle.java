@@ -5,7 +5,7 @@ public class MainForVehicle {
          Vehicle dv = new Vehicle("Kia","Seltos","Orange",3200000.33,true);
         
          Vehicle pv = new Vehicle("MG","LXI","Silver",3400000.55,false);
-         Vehicle cv = new Vehicle("Suzuki","VXI","Orange",3330000.9,true);
+         Vehicle cv = new Vehicle("Suzuki","ZXI","Orange",3330000.9,true);
          System.out.println("========Vehicle Details=======");
          System.out.printf("%-12s | %-12s | %-10s | %-15s | %-10s%n", 
                           "BRAND", "MODEL", "COLOR", "PRICE", "MILEAGE");
