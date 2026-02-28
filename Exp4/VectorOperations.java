@@ -1,64 +1,116 @@
 package Exp4;
+import java.util.Scanner;
 
 public class VectorOperations {
 
-    // Requirement: Method to check dimensions
-    public static void validateMatch(Vector v1, Vector v2) throws VectorException {
-        if (v1.dim != v2.dim) {
-            throw new VectorException("Dimensions do not match: " + v1.dim + "D vs " + v2.dim + "D");
+    // Method to check dimensions
+    public static void checkDimension(Vector v1, Vector v2) throws VectorException {
+        if (v1.getDimension() != v2.getDimension()) {
+            throw new VectorException("Vector dimensions must be same.");
         }
     }
 
-    // Requirement: add() returns Vector
+    // Add method
     public static Vector add(Vector v1, Vector v2) throws VectorException {
-        validateMatch(v1, v2);
-        double[] res = new double[v1.dim];
-        for (int i = 0; i < v1.dim; i++) {
-            res[i] = v1.V[i] + v2.V[i];
+        checkDimension(v1, v2);
+
+        int dim = v1.getDimension();
+        double[] result = new double[dim];
+
+        for (int i = 0; i < dim; i++) {
+            result[i] = v1.getComponents()[i] + v2.getComponents()[i];
         }
-        return new Vector(res);
+
+        return new Vector(result);
     }
 
-    // Requirement: subtract() returns Vector
+    // Subtract method
     public static Vector subtract(Vector v1, Vector v2) throws VectorException {
-        validateMatch(v1, v2);
-        double[] res = new double[v1.dim];
-        for (int i = 0; i < v1.dim; i++) {
-            res[i] = v1.V[i] - v2.V[i];
+        checkDimension(v1, v2);
+
+        int dim = v1.getDimension();
+        double[] result = new double[dim];
+
+        for (int i = 0; i < dim; i++) {
+            result[i] = v1.getComponents()[i] - v2.getComponents()[i];
         }
-        return new Vector(res);
+
+        return new Vector(result);
     }
 
-    // Requirement: dotProduct() returns a single value
+    // Dot Product method
     public static double dotProduct(Vector v1, Vector v2) throws VectorException {
-        validateMatch(v1, v2);
-        double res = 0;
-        for (int i = 0; i < v1.dim; i++) {
-            res += v1.V[i] * v2.V[i];
+        checkDimension(v1, v2);
+
+        double result = 0;
+        int dim = v1.getDimension();
+
+        for (int i = 0; i < dim; i++) {
+            result += v1.getComponents()[i] * v2.getComponents()[i];
         }
-        return res;
+
+        return result;
+    }
+
+    // Strict input method
+    public static Vector readVector(Scanner sc) throws VectorException {
+
+        System.out.print("Enter dimension (2 or 3): ");
+        int dim = sc.nextInt();
+        sc.nextLine(); // clear buffer
+
+        System.out.println("Enter components separated by space:");
+        String input = sc.nextLine();
+
+        String[] parts = input.trim().split("\\s+");
+
+        if (parts.length != dim) {
+            throw new VectorException("Number of components must match dimension!");
+        }
+
+        double[] comp = new double[dim];
+
+        try {
+            for (int i = 0; i < dim; i++) {
+                comp[i] = Double.parseDouble(parts[i]);
+            }
+        } catch (NumberFormatException e) {
+            throw new VectorException("Invalid number format!");
+        }
+
+        return new Vector(comp);
     }
 
     public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
         try {
-            Vector v1 = new Vector(new double[]{10, 20, 30});
-            Vector v2 = new Vector(new double[]{5, 5, 5});
 
-            System.out.println("v1: "); v1.display();
-            System.out.println("v2: "); v2.display();
+            System.out.println("Vector 1:");
+            Vector v1 = readVector(sc);
 
-            // Store in 'v' as requested
-            Vector v = add(v1, v2);
-            System.out.println("Result Addition (v): "); v.display();
+            System.out.println("\nVector 2:");
+            Vector v2 = readVector(sc);
 
-            v = subtract(v1, v2);
-            System.out.println("Result Subtraction (v): "); v.display();
-
+            Vector sum = add(v1, v2);
+            Vector diff = subtract(v1, v2);
             double dot = dotProduct(v1, v2);
-            System.out.println("Result Dot Product: " + dot);
+
+            System.out.println("\nAddition Result:");
+            sum.display();
+
+            System.out.println("Subtraction Result:");
+            diff.display();
+
+            System.out.println("Dot Product: " + dot);
 
         } catch (VectorException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Vector Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Unexpected Error!");
         }
+
+        sc.close();
     }
 }

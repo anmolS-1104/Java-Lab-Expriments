@@ -1,365 +1,42 @@
 package Exp4;
 
 public class Vector {
-    public double[] V;
-    public int dim;
 
-    public Vector(double[] components) throws VectorException {
-        if (components.length != 2 && components.length != 3) {
-            throw new VectorException("Invalid Dimension: Only 2D or 3D allowed.");
+    private double[] components;
+    private int dimension;
+
+    // Constructor (only 2D or 3D allowed)
+    public Vector(double[] comp) throws VectorException {
+
+        if (comp.length != 2 && comp.length != 3) {
+            throw new VectorException("Only 2D or 3D vectors are allowed.");
         }
-        this.V = components;
-        this.dim = components.length;
+
+        dimension = comp.length;
+        components = new double[dimension];
+
+        for (int i = 0; i < dimension; i++) {
+            components[i] = comp[i];
+        }
     }
 
+    public int getDimension() {
+        return dimension;
+    }
+
+    public double[] getComponents() {
+        return components;
+    }
+
+    // Display method
     public void display() {
         System.out.print("(");
-        for (int i = 0; i < dim; i++) {
-            System.out.print(V[i] + (i < dim - 1 ? ", " : ""));
+        for (int i = 0; i < dimension; i++) {
+            System.out.print(components[i]);
+            if (i < dimension - 1)
+                System.out.print(", ");
         }
         System.out.println(")");
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
