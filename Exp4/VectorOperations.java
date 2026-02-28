@@ -52,7 +52,7 @@ public class VectorOperations {
             System.out.println("Result Addition (v): "); v.display();
 
             v = subtract(v1, v2);
-            System.out.print("Result Subtraction (v): "); v.display();
+            System.out.println("Result Subtraction (v): "); v.display();
 
             double dot = dotProduct(v1, v2);
             System.out.println("Result Dot Product: " + dot);
