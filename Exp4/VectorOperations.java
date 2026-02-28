@@ -49,7 +49,7 @@ public class VectorOperations {
 
             // Store in 'v' as requested
             Vector v = add(v1, v2);
-            System.out.print("Result Addition (v): "); v.display();
+            System.out.println("Result Addition (v): "); v.display();
 
             v = subtract(v1, v2);
             System.out.print("Result Subtraction (v): "); v.display();
