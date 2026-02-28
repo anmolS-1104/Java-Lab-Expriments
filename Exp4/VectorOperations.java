@@ -44,8 +44,8 @@ public class VectorOperations {
             Vector v1 = new Vector(new double[]{10, 20, 30});
             Vector v2 = new Vector(new double[]{5, 5, 5});
 
-            System.out.print("v1: "); v1.display();
-            System.out.print("v2: "); v2.display();
+            System.out.println("v1: "); v1.display();
+            System.out.println("v2: "); v2.display();
 
             // Store in 'v' as requested
             Vector v = add(v1, v2);
