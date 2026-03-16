@@ -1,42 +1,50 @@
-// Save as BankingSimpleDemo.java in folder Exp5
 package Exp5;
+
+
 import java.util.ArrayList;
 
-class BankingException extends Exception {
-    public BankingException(String msg) { super(msg); }
-}
-
+// -------------------- Base Class --------------------
 class BankAccount {
     private final String accountNo;
     private final String holderName;
     protected double balance;
 
     public BankAccount(String accountNo, String holderName, double openingBalance) throws BankingException {
+        if (openingBalance < 0) throw new BankingException(openingBalance+" Opening balance cannot be negative.");
         this.accountNo = accountNo;
         this.holderName = holderName;
         this.balance = openingBalance;
     }
 
+    public void deposit(double amount) throws BankingException {
+        if (amount <= 0) throw new BankingException("Deposit must be positive.");
+        balance += amount;
+        System.out.println("Deposited: $" + amount + " to " + accountNo);
+    }
+
     public void withdraw(double amount) throws BankingException {
-        if (amount <= 0) throw new BankingException("Withdraw amount must be positive.");
-        if (amount > balance) throw new BankingException("Insufficient balance.");
-        
-        System.out.println("Processing Withdrawal: $" + amount + " from Generic Account...");
+        if (amount <= 0) throw new BankingException("Amount must be positive.");
+        if (amount > balance) {
+            throw new BankingException("FAILED: Insufficient funds. Balance: $" + balance + ", Requested: $" + amount);
+        }
+        System.out.println("Withdrawing: $" + amount + " from Generic Account [" + accountNo + "]");
         balance -= amount;
         System.out.println("Success! New Balance: $" + balance);
     }
 
+    public String getAccountType() { return "GENERIC"; }
+    public String getAccountNo() { return accountNo; }
+    
     public String summary() {
         return String.format("[%s] AccNo=%s, Holder=%s, Balance=%.2f", getAccountType(), accountNo, holderName, balance);
     }
-    public String getAccountType() { return "GENERIC"; }
-    public String getAccountNo() { return accountNo; }
 }
 
+// -------------------- Child: Savings --------------------
 class SavingsAccount extends BankAccount {
     private final double minBalance;
 
-    public SavingsAccount(String accountNo, String holderName, double openingBalance, double minBalance, double rate) throws BankingException {
+    public SavingsAccount(String accountNo, String holderName, double openingBalance, double minBalance) throws BankingException {
         super(accountNo, holderName, openingBalance);
         this.minBalance = minBalance;
     }
@@ -46,22 +54,21 @@ class SavingsAccount extends BankAccount {
 
     @Override
     public void withdraw(double amount) throws BankingException {
-        if (amount <= 0) throw new BankingException("Withdraw amount must be positive.");
+        if (amount <= 0) throw new BankingException("Amount must be positive.");
         if ((balance - amount) < minBalance) {
-            throw new BankingException("Denied: Withdrawal of $" + amount + " would drop balance below min limit of $" + minBalance);
+            throw new BankingException(amount+ " Cannnot be withdrawn due to minBalance:" + minBalance);
         }
-        System.out.println("Processing Withdrawal: $" + amount + " from Savings Account...");
+        System.out.println("Withdrawing: $" + amount + " from Savings [" + getAccountNo() + "]");
         balance -= amount;
         System.out.println("Success! New Savings Balance: $" + balance);
     }
 }
 
+// -------------------- Child: Current (No Overdraft) --------------------
 class CurrentAccount extends BankAccount {
-    private final double overdraftLimit;
 
-    public CurrentAccount(String accountNo, String holderName, double bal, double limit) throws BankingException {
-        super(accountNo, holderName, bal);
-        this.overdraftLimit = limit;
+    public CurrentAccount(String accountNo, String holderName, double openingBalance) throws BankingException {
+        super(accountNo, holderName, openingBalance);
     }
 
     @Override
@@ -69,154 +76,48 @@ class CurrentAccount extends BankAccount {
 
     @Override
     public void withdraw(double amount) throws BankingException {
-        if ((balance - amount) < -overdraftLimit) {
-            throw new BankingException("Current Error: Withdrawal of $" + amount + " exceeds overdraft limit.");
+        if (amount <= 0) throw new BankingException("Amount must be positive.");
+        if (amount > balance) {
+            throw new BankingException("FAILED: Current Account has no overdraft. Insufficient funds.");
         }
-        System.out.println("Processing Withdrawal: $" + amount + " from Current Account...");
+        System.out.println("Withdrawing: $" + amount + " from Current Account [" + getAccountNo() + "]");
         balance -= amount;
-        System.out.println("Success! Current Balance is now: $" + balance);
+        System.out.println("Success! New Current Balance: $" + balance);
     }
 }
 
+// -------------------- Main Driver --------------------
 public class BankingSimpleDemo {
     public static void main(String[] args) {
         try {
-            BankAccount acc1 = new SavingsAccount("SA-101", "Ayaan", 5000, 1000, 4.0);
-            BankAccount acc2 = new CurrentAccount("CA-201", "Isha", 2000, 3000);
+            // Setup accounts
+            BankAccount sa = new SavingsAccount("SA-101", "Ayaan", 5000,1000);
+            BankAccount ca = new CurrentAccount("CA-201", "Isha", 2000);
 
-            System.out.println("---- Initial State ----");
-            System.out.println(acc1.summary());
-            System.out.println(acc2.summary());
+            ArrayList<BankAccount> list = new ArrayList<>();
+            list.add(sa);
+            list.add(ca);
 
-            System.out.println("\n---- Performing Transactions ----");
-            acc1.withdraw(2000); 
-            acc2.withdraw(4000); 
+            System.out.println("=== INITIAL BALANCES ===");
+            for (BankAccount b : list) System.out.println(b.summary());
 
-            System.out.println("\n---- Attempting Illegal Withdrawal ----");
-            acc1.withdraw(3500); // This will trigger the exception
+            System.out.println("\n=== PROCESSING WITHDRAWALS ===");
+            
+            // 1. Valid Savings Withdrawal
+            sa.withdraw(2000); 
 
-        } catch (BankingException ex) {
-            System.out.println("\n!!! TRANSACTION BLOCKED !!!");
-            System.out.println("Reason: " + ex.getMessage());
+            // 2. Valid Current Withdrawal
+            ca.withdraw(1500);
+
+            System.out.println("\n=== AFTER TRANSACTIONS ===");
+            for (BankAccount b : list) System.out.println(b.summary());
+
+            // 3. Triggering Exception (Attempt to withdraw more than balance)
+            
+            
+
+        } catch (BankingException e) {
+            System.out.println("\nBLOCKER: " + e.getMessage());
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
