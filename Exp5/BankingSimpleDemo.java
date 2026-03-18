@@ -41,29 +41,42 @@ class BankAccount {
 }
 
 // -------------------- Child: Savings --------------------
-class SavingsAccount extends BankAccount {
-    private final double minBalance;
+class LoanAccount extends BankAccount {
+    private final double loanLimit;
 
-    public SavingsAccount(String accountNo, String holderName, double openingBalance, double minBalance) throws BankingException {
-        super(accountNo, holderName, openingBalance);
-        this.minBalance = minBalance;
+    public LoanAccount(String accountNo, String holderName, double loanAmount) throws BankingException {
+        // In a loan, the "balance" starts as the debt amount. 
+        // We'll treat balance here as the 'Amount Owed'.
+        super(accountNo, holderName, loanAmount);
+        this.loanLimit = loanAmount;
     }
 
     @Override
-    public String getAccountType() { return "SAVINGS"; }
+    public String getAccountType() { return "LOAN"; }
+
+    @Override
+    public void deposit(double amount) throws BankingException {
+        if (amount <= 0) throw new BankingException("Repayment must be positive.");
+        if (amount > balance) {
+            throw new BankingException("Repayment exceeds total debt! Current debt: $" + balance);
+        }
+        balance -= amount; // Paying off the loan reduces the balance (debt)
+        System.out.println("Repayment successful: $" + amount + " paid toward Loan [" + getAccountNo() + "]");
+        System.out.println("Remaining Debt: $" + balance);
+    }
 
     @Override
     public void withdraw(double amount) throws BankingException {
-        if (amount <= 0) throw new BankingException("Amount must be positive.");
-        if ((balance - amount) < minBalance) {
-            throw new BankingException(amount+ " Cannnot be withdrawn due to minBalance:" + minBalance);
-        }
-        System.out.println("Withdrawing: $" + amount + " from Savings [" + getAccountNo() + "]");
-        balance -= amount;
-        System.out.println("Success! New Savings Balance: $" + balance);
+        // Usually, you don't 'withdraw' from a loan after it's issued.
+        throw new BankingException("Withdrawals are not allowed from a Loan Account.");
+    }
+
+    @Override
+    public String summary() {
+        return String.format("[%s] AccNo=%s, Total Loan=%s, Pending Debt=%.2f", 
+                             getAccountType(), getAccountNo(), loanLimit, balance);
     }
 }
-
 // -------------------- Child: Current (No Overdraft) --------------------
 class CurrentAccount extends BankAccount {
 
@@ -91,7 +104,7 @@ public class BankingSimpleDemo {
     public static void main(String[] args) {
         try {
             // Setup accounts
-            BankAccount sa = new SavingsAccount("SA-101", "Ayaan", 5000,1000);
+            BankAccount sa = new LoanAccount("SA-101", "Ayaan", 5000,1000);
             BankAccount ca = new CurrentAccount("CA-201", "Isha", 2000);
 
             ArrayList<BankAccount> list = new ArrayList<>();
