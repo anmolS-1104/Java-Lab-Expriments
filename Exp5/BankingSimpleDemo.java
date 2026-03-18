@@ -104,7 +104,7 @@ public class BankingSimpleDemo {
     public static void main(String[] args) {
         try {
             // Setup accounts
-            BankAccount sa = new LoanAccount("SA-101", "Ayaan", 5000,1000);
+            BankAccount sa = new LoanAccount("SA-101", "Ayaan", 5000);
             BankAccount ca = new CurrentAccount("CA-201", "Isha", 2000);
 
             ArrayList<BankAccount> list = new ArrayList<>();
