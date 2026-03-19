@@ -1,136 +1,216 @@
 package Exp5;
-
-
 import java.util.ArrayList;
 
 // -------------------- Base Class --------------------
-class BankAccount {
-    private final String accountNo;
-    private final String holderName;
+abstract class BankAccount {
+    protected String accNo;
     protected double balance;
 
-    public BankAccount(String accountNo, String holderName, double openingBalance) throws BankingException {
-        if (openingBalance < 0) throw new BankingException(openingBalance+" Opening balance cannot be negative.");
-        this.accountNo = accountNo;
-        this.holderName = holderName;
-        this.balance = openingBalance;
+    public BankAccount(String accNo, double initialBalance) {
+        this.accNo = accNo;
+        this.balance = initialBalance;
     }
 
     public void deposit(double amount) throws BankingException {
         if (amount <= 0) throw new BankingException("Deposit must be positive.");
         balance += amount;
-        System.out.println("Deposited: $" + amount + " to " + accountNo);
+        System.out.println("Deposited $" + amount + " to " + accNo);
     }
 
-    public void withdraw(double amount) throws BankingException {
-        if (amount <= 0) throw new BankingException("Amount must be positive.");
-        if (amount > balance) {
-            throw new BankingException("FAILED: Insufficient funds. Balance: $" + balance + ", Requested: $" + amount);
-        }
-        System.out.println("Withdrawing: $" + amount + " from Generic Account [" + accountNo + "]");
-        balance -= amount;
-        System.out.println("Success! New Balance: $" + balance);
+    public void withdraw(double amount) throws BankingException{
+    // ERROR CHECK: 
+    if (amount <= 0) {
+        throw new BankingException("Invalid Transaction: Withdrawal amount must be greater than zero.");
     }
 
-    public String getAccountType() { return "GENERIC"; }
-    public String getAccountNo() { return accountNo; }
+    // Logic for balance check continues here...
+    if (amount > balance) {
+        throw new BankingException("Insufficient funds.");
+    }
     
-    public String summary() {
-        return String.format("[%s] AccNo=%s, Holder=%s, Balance=%.2f", getAccountType(), accountNo, holderName, balance);
+    balance -= amount;
+    System.out.println("Withdrew: $" + amount);
+}
+    public abstract String getAccountType();
+
+    public double getBalance() { return balance; }
+    public String getAccNo() { return accNo; }
+}
+
+// -------------------- Child Class 1: Savings --------------------
+class SavingsAccount extends BankAccount {
+    private double minBalance = 500.0;
+
+    public SavingsAccount(String accNo, double bal) { super(accNo, bal); }
+
+    @Override
+    public String getAccountType() { return "SAVINGS"; }
+
+    @Override
+    public void withdraw(double amount) throws BankingException {
+        if (amount <= 0) throw new BankingException("Withdraw amount must be positive.");
+        if (balance - amount < minBalance) 
+            throw new BankingException("Savings Error: Must maintain min balance of $" + minBalance);
+        
+        balance -= amount;
+        System.out.println("Success: Withdrew $" + amount + " from Savings " + accNo);
     }
 }
 
-// -------------------- Child: Savings --------------------
+// -------------------- Child Class 2: Loan --------------------
 class LoanAccount extends BankAccount {
-    private final double loanLimit;
-
-    public LoanAccount(String accountNo, String holderName, double loanAmount) throws BankingException {
-        // In a loan, the "balance" starts as the debt amount. 
-        // We'll treat balance here as the 'Amount Owed'.
-        super(accountNo, holderName, loanAmount);
-        this.loanLimit = loanAmount;
+    public LoanAccount(String accNo, double initialDebt) { 
+        super(accNo, -initialDebt); // Debt is shown as negative balance
     }
 
     @Override
     public String getAccountType() { return "LOAN"; }
 
     @Override
-    public void deposit(double amount) throws BankingException {
-        if (amount <= 0) throw new BankingException("Repayment must be positive.");
-        if (amount > balance) {
-            throw new BankingException("Repayment exceeds total debt! Current debt: $" + balance);
-        }
-        balance -= amount; // Paying off the loan reduces the balance (debt)
-        System.out.println("Repayment successful: $" + amount + " paid toward Loan [" + getAccountNo() + "]");
-        System.out.println("Remaining Debt: $" + balance);
-    }
-
-    @Override
     public void withdraw(double amount) throws BankingException {
-        // Usually, you don't 'withdraw' from a loan after it's issued.
-        throw new BankingException("Withdrawals are not allowed from a Loan Account.");
-    }
-
-    @Override
-    public String summary() {
-        return String.format("[%s] AccNo=%s, Total Loan=%s, Pending Debt=%.2f", 
-                             getAccountType(), getAccountNo(), loanLimit, balance);
-    }
-}
-// -------------------- Child: Current (No Overdraft) --------------------
-class CurrentAccount extends BankAccount {
-
-    public CurrentAccount(String accountNo, String holderName, double openingBalance) throws BankingException {
-        super(accountNo, holderName, openingBalance);
-    }
-
-    @Override
-    public String getAccountType() { return "CURRENT"; }
-
-    @Override
-    public void withdraw(double amount) throws BankingException {
-        if (amount <= 0) throw new BankingException("Amount must be positive.");
-        if (amount > balance) {
-            throw new BankingException("FAILED: Current Account has no overdraft. Insufficient funds.");
-        }
-        System.out.println("Withdrawing: $" + amount + " from Current Account [" + getAccountNo() + "]");
+        // Taking more loan increases the debt (makes balance more negative)
         balance -= amount;
-        System.out.println("Success! New Current Balance: $" + balance);
+        System.out.println("Success: Loan Disbursement of $" + amount + " to " + accNo);
     }
 }
 
-// -------------------- Main Driver --------------------
+// -------------------- Customer Class --------------------
+class Customer {
+    private String name;
+    private ArrayList<BankAccount> myAccounts = new ArrayList<>();
+
+    public Customer(String name) { this.name = name; }
+
+    public void addAccount(BankAccount acc) { myAccounts.add(acc); }
+
+    // This method fixes the "cannot find symbol" error
+    public BankAccount getAccount(int index) {
+        if (index >= 0 && index < myAccounts.size()) {
+            return myAccounts.get(index);
+        }
+        return null;
+    }
+
+    public void showConsolidatedReport() {
+        System.out.println("\nCUSTOMER: " + name.toUpperCase());
+        System.out.println("--------------------------------------------");
+        double netBalance = 0;
+        for (BankAccount a : myAccounts) {
+            System.out.printf("%-10s (%s) | Balance: $%.2f\n", a.getAccountType(), a.getAccNo(), a.getBalance());
+            netBalance += a.getBalance();
+        }
+        System.out.printf("NET CONSOLIDATED BALANCE: $%.2f\n", netBalance);
+        System.out.println("--------------------------------------------");
+    }
+}
+
+// -------------------- Main Class --------------------
 public class BankingSimpleDemo {
     public static void main(String[] args) {
         try {
-            // Setup accounts
-            BankAccount sa = new LoanAccount("SA-101", "Ayaan", 5000);
-            BankAccount ca = new CurrentAccount("CA-201", "Isha", 2000);
+            ArrayList<Customer> customers = new ArrayList<>();
 
-            ArrayList<BankAccount> list = new ArrayList<>();
-            list.add(sa);
-            list.add(ca);
+            // 1. Setup Ayaan
+            Customer c1 = new Customer("Ayaan");
+            c1.addAccount(new SavingsAccount("SAV-101", 5000));
+            c1.addAccount(new LoanAccount("LOAN-99", 2000));
+            customers.add(c1);
 
-            System.out.println("=== INITIAL BALANCES ===");
-            for (BankAccount b : list) System.out.println(b.summary());
+            // 2. Setup Isha
+            Customer c2 = new Customer("Isha");
+            c2.addAccount(new SavingsAccount("SAV-202", 1500));
+            c2.addAccount(new LoanAccount("LOAN-109", 2000));
+            customers.add(c2);
 
-            System.out.println("\n=== PROCESSING WITHDRAWALS ===");
+            // Display Initial State
+            System.out.println("=== BANK INITIAL STATE ===");
+            for (Customer c : customers) {
+                c.showConsolidatedReport();
+            }
+
+            // 3. Perform a real Transaction
+            System.out.println("\n>>> TRANSACTION: Ayaan withdraws $1000 from Savings");
+             
             
-            // 1. Valid Savings Withdrawal
-            sa.withdraw(2000); 
+            // This line now works because of the getAccount(int) method
+            c1.getAccount(0).withdraw(1000); 
+            System.out.println("\n=== UPDATED STATE FOR CUSTOMER ===");
+            c1.showConsolidatedReport();
+            System.out.println("\n>>> TRANSACTION: Isha withdraws -$1000 from Savings");
+            c2.getAccount(0).withdraw(-1000); 
+            System.out.println("\n=== UPDATED STATE FOR CUSTOMER ===");
+            c2.showConsolidatedReport();
 
-            // 2. Valid Current Withdrawal
-            ca.withdraw(1500);
-
-            System.out.println("\n=== AFTER TRANSACTIONS ===");
-            for (BankAccount b : list) System.out.println(b.summary());
-
-            // 3. Triggering Exception (Attempt to withdraw more than balance)
-            
-            
 
         } catch (BankingException e) {
-            System.out.println("\nBLOCKER: " + e.getMessage());
+            System.out.println("\nBANKING ERROR: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("\nSYSTEM ERROR: " + e.getMessage());
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
