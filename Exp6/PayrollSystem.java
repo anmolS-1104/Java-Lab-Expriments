@@ -1,20 +1,21 @@
 package Exp6;
+import java.time.LocalDate;
+
 
 public class PayrollSystem {
     public static void main(String[] args) {
-        // Full-Time SWE
-        FullTimeEmployee swe = new FullTimeEmployee(101, "John Doe", "ABCDE1234F", "SWE", 60000, 5000);
-        swe.displayInfo();
-        System.out.println("CTC: $" + swe.calcCTC());
+        // Create Permanent Employee
+        FullTimeEmployee emp1 = new FullTimeEmployee(301, "Amit Kulkarni", "ABC1234P", LocalDate.of(2022, 11, 5), 30000, 12000);
+        
+        // Create Contract Employee
+        ContractEmployee emp2 = new ContractEmployee(302, "Sneha Patil", "XYZ5678Q", LocalDate.now(), 156.25, 160);
+        
+        // Create Manager
+        Manager mgr = new Manager(303, "Robert Brown", "LMN9012R", LocalDate.of(2022, 4, 5), 50000, 15000, 5000);
 
-        // Contract Employee
-        ContractEmployee contractor = new ContractEmployee(201, "Jane Smith", "FGHIJ5678K", "Consultant", 50, 160);
-        contractor.displayInfo();
-        System.out.println("CTC: $" + contractor.calcCTC());
-
-        // Manager (Multilevel)
-        Manager mgr = new Manager(301, "Robert Brown", "LMNOP9012Q", 80000, 15000, 2000, 3000);
-        mgr.displayInfo();
-        System.out.println("CTC: $" + mgr.calcCTC());
+        // Run displays
+        emp1.displayPayroll();
+        emp2.displayPayroll();
+        mgr.displayPayroll();
     }
 }

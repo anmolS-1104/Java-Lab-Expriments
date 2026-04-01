@@ -1,86 +1,81 @@
 package Exp6;
+import java.time.LocalDate; // Modern Date API
 
-import java.util.Date;
+// Root Class
+public abstract class Employee {
+    protected String name, panNo, type;
+    protected double empID;
+    protected LocalDate joiningDate; // Changed from Date to LocalDate
 
-
-abstract class Employee {
-    String name;
-    String panNo;
-    Date joiningDate;
-    String designation;
-    double empID;
-    public Employee(String name,String panNo,String designation,double empID){
+    public Employee(String name, String panNo, String type, double empID, LocalDate joiningDate) {
         this.name = name;
         this.panNo = panNo;
-        this.joiningDate = new Date();
-        this.designation = designation;
+        this.type = type;
         this.empID = empID;
+        this.joiningDate = joiningDate;
     }
-    abstract double calcCTC();
-    void displayInfo() {
-        System.out.println("\nID: " + empID + " | Name: " + name + " | Role: " + designation);
+
+    public abstract double calcCTC();
+
+    public void displayBaseInfo() {
+        System.out.println("Employee ID   : " + (int)empID);
+        System.out.println("Employee Name : " + name);
+        System.out.println("Employee Type : " + type);
+        System.out.println("PAN Number    : " + panNo);
+        System.out.println("Joining Date  : " + joiningDate);
     }
 }
-class FullTimeEmployee extends Employee{
-    double baseSalary;
-    double extraPay;
-    FullTimeEmployee(int empID, String name, String panNo, String designation, double baseSalary, double extraPay) {
-        super(name,panNo,designation,empID);
-        this.baseSalary = baseSalary;
-        this.extraPay = extraPay;
+
+// 1. Single Inheritance
+class FullTimeEmployee extends Employee {
+    double baseSalary, perfBonus;
+
+    FullTimeEmployee(double id, String name, String pan, LocalDate doj, double base, double bonus) {
+        super(name, pan, "Permanent", id, doj);
+        this.baseSalary = base;
+        this.perfBonus = bonus;
     }
 
     @Override
-    double calcCTC() {
-        // Shared logic for SWE and HR roles
-        return baseSalary + extraPay;
+    public double calcCTC() { return baseSalary + perfBonus; }
+
+    public void displayPayroll() {
+        displayBaseInfo();
+        System.out.println("Basic Salary  : " + (int)baseSalary);
+        System.out.println("Gross Salary  : " + (int)calcCTC() + "\n");
     }
 }
+
+// 2. Multilevel Inheritance
+class Manager extends FullTimeEmployee {
+    double allowance;
+
+    Manager(double id, String name, String pan, LocalDate doj, double base, double bonus, double allowance) {
+        super(id, name, pan, doj, base, bonus);
+        this.type = "Manager (Permanent)";
+        this.allowance = allowance;
+    }
+
+    @Override
+    public double calcCTC() { return super.calcCTC() + allowance; }
+}
+
+// 3. Hierarchical Inheritance
 class ContractEmployee extends Employee {
     double hourlyRate;
-    int noOfHrs;
+    int hours;
 
-    ContractEmployee(int empID, String name, String panNo, String designation, double hourlyRate, int noOfHrs) {
-        super(name,panNo,designation,empID);
-        this.hourlyRate = hourlyRate;
-        this.noOfHrs = noOfHrs;
+    ContractEmployee(double id, String name, String pan, LocalDate doj, double rate, int hrs) {
+        super(name, pan, "Contract", id, doj);
+        this.hourlyRate = rate;
+        this.hours = hrs;
     }
 
     @Override
-    double calcCTC() {
-        return noOfHrs * hourlyRate;
+    public double calcCTC() { return hourlyRate * hours; }
+
+    public void displayPayroll() {
+        displayBaseInfo();
+        System.out.println("Monthly Salary: " + (int)calcCTC() + "\n");
     }
 }
-class Manager extends FullTimeEmployee{
-    double ta; // Travel Allowance
-    double eduAllowance;
-
-    Manager(int empId, String name, String panNo, double baseSalary, double perfBonus, double ta, double eduAllowance) {
-        // Designation is fixed as Manager
-        super(empId, name, panNo, "Manager", baseSalary, perfBonus);
-        this.ta = ta;
-        this.eduAllowance = eduAllowance;
-    }
-
-    @Override
-    double calcCTC() {
-        // baseSalary + perfBonus (from parent) + Manager specific allowances
-        return super.calcCTC() + ta + eduAllowance;
-    }
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
