@@ -79,14 +79,11 @@ public class RestaurantManager{
         }
     }
 
-    // --- DELETE METHOD ---
-    public static void deleteItemsByName(Connection conn, String pattern) throws SQLException {
-        String sql = "DELETE FROM MenuItem WHERE Name LIKE ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, pattern);
-            int rows = pstmt.executeUpdate();
-            System.out.println("\nDeletion complete. Rows removed: " + rows);
-        }
+    // --- METHOD: Delete 'P' Items (Delete) ---
+    private static void deletePItems(Statement stmt) throws SQLException {
+        System.out.println("\n[Step 5] Deleting items starting with 'P'...");
+        stmt.executeUpdate("DELETE FROM MenuItem WHERE Name LIKE 'P%'");
+        printTable(stmt.executeQuery("SELECT * FROM MenuItem"));
     }
 
     // --- UTILITY METHOD TO PRINT TABLES ---
