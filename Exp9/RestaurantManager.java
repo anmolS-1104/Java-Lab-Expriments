@@ -1,82 +1,87 @@
 import java.sql.*;
 
-public class RestaurantManager{
-    static final String URL = "jdbc:mysql://localhost:3306/FoodHub";
-    static final String USER = "root";
-    static final String PASS = "ANMOl@2006";
+public class RestaurantManager {
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/FoodHub";
+    private static final String USER = "root";
+    private static final String PASS = System.getenv("DB_PASS");
 
     public static void main(String[] args) {
+        if (PASS == null) {
+            System.err.println("Error: Set DB_PASS in Run Configurations!");
+            return;
+        }
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS)) {
-            System.out.println("Connection established.");
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {
+            System.out.println("--- Connected to FoodHub Database ---\n");
+            Statement stmt = conn.createStatement();
 
-            // Call individual methods
-            insertRecords(conn);
+            // Setup and Reset
+            createTables(stmt);
+            resetData(stmt);
 
-            System.out.println("\n--- Items <= 100 ---");
-            selectLowPriceItems(conn);
+            // 1. CREATE
+            insertRecords(stmt);
 
-            System.out.println("\n--- Items in 'Cafe Java' ---");
-            selectByRestaurant(conn, "Cafe Java");
+            // 2. READ
+            selectBudgetItems(stmt);
+            selectCafeJavaItems(stmt);
 
-            updatePrices(conn);
+            // 3. UPDATE
+            updatePrices(stmt);
 
-            deleteItemsByName(conn, "P%");
+            // 4. DELETE
+            deletePItems(stmt);
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    // --- INSERT METHOD ---
-    public static void insertRecords(Connection conn) throws SQLException {
-        String resSQL = "INSERT IGNORE INTO Restaurant (Id, Name, Address) VALUES (?, ?, ?)";
-        String itemSQL = "INSERT IGNORE INTO MenuItem (Id, Name, Price, ResId) VALUES (?, ?, ?, ?)";
+    // --- METHOD: Create Tables ---
+    private static void createTables(Statement stmt) throws SQLException {
+        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS Restaurant (Id INT PRIMARY KEY, Name VARCHAR(100), Address VARCHAR(255))");
+        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS MenuItem (Id INT PRIMARY KEY, Name VARCHAR(100), Price DECIMAL(10, 2), ResId INT, FOREIGN KEY (ResId) REFERENCES Restaurant(Id))");
+    }
 
-        try (PreparedStatement pRes = conn.prepareStatement(resSQL);
-             PreparedStatement pItem = conn.prepareStatement(itemSQL)) {
+    // --- METHOD: Reset Data (Truncate) ---
+    private static void resetData(Statement stmt) throws SQLException {
+        stmt.executeUpdate("SET FOREIGN_KEY_CHECKS = 0");
+        stmt.executeUpdate("TRUNCATE TABLE MenuItem");
+        stmt.executeUpdate("TRUNCATE TABLE Restaurant");
+        stmt.executeUpdate("SET FOREIGN_KEY_CHECKS = 1");
+    }
 
-            // Insert 10 Restaurants
-            for (int i = 1; i <= 10; i++) {
-                pRes.setInt(1, i);
-                pRes.setString(2, i == 1 ? "Cafe Java" : "Restaurant " + i);
-                pRes.setString(3, "Location " + i);
-                pRes.executeUpdate();
-            }
-
-            // Insert 10 Menu Items
-            String[] names = {"Pizza", "Pasta", "Burger", "Pancakes", "Tea", "Coffee", "Salad", "Fries", "Soda", "Cake"};
-            double[] prices = {120, 95, 80, 150, 20, 40, 110, 60, 30, 100};
-            for (int i = 1; i <= 10; i++) {
-                pItem.setInt(1, i);
-                pItem.setString(2, names[i-1]);
-                pItem.setDouble(3, prices[i-1]);
-                pItem.setInt(4, (i % 10) + 1);
-                pItem.executeUpdate();
-            }
-            System.out.println("Records inserted successfully.");
+    // --- METHOD: Insert (Create) ---
+    private static void insertRecords(Statement stmt) throws SQLException {
+        System.out.println("[Step 1] Inserting 10 records...");
+        for (int i = 1; i <= 10; i++) {
+            String rName = (i == 1) ? "Cafe Java" : "Bistro " + i;
+            stmt.executeUpdate("INSERT INTO Restaurant VALUES (" + i + ", '" + rName + "', 'Loc " + i + "')");
+        }
+        String[] foods = {"Pasta", "Pizza", "Burger", "Tea", "Coffee", "Salad", "Pancakes", "Soda", "Steak", "Pie"};
+        for (int i = 1; i <= 10; i++) {
+            stmt.executeUpdate("INSERT INTO MenuItem VALUES (" + i + ", '" + foods[i-1] + "', " + (i * 25.0) + ", " + ((i % 10) + 1) + ")");
         }
     }
 
-    // --- SELECT METHOD (Price <= 100) ---
-    public static void selectLowPriceItems(Connection conn) throws SQLException {
-        String sql = "SELECT * FROM MenuItem WHERE Price <= 100";
-        printResultSet(conn, sql);
+    // --- METHOD: Select Price <= 100 (Read) ---
+    private static void selectBudgetItems(Statement stmt) throws SQLException {
+        System.out.println("\n[Step 2] Items with Price <= 100:");
+        printTable(stmt.executeQuery("SELECT * FROM MenuItem WHERE Price <= 100"));
     }
 
-    // --- SELECT METHOD (By Restaurant Name) ---
-    public static void selectByRestaurant(Connection conn, String resName) throws SQLException {
-        String sql = "SELECT m.* FROM MenuItem m JOIN Restaurant r ON m.ResId = r.Id WHERE r.Name = '" + resName + "'";
-        printResultSet(conn, sql);
+    // --- METHOD: Select from Cafe Java (Read/Join) ---
+    private static void selectCafeJavaItems(Statement stmt) throws SQLException {
+        System.out.println("\n[Step 3] Items in 'Cafe Java':");
+        String sql = "SELECT m.* FROM MenuItem m JOIN Restaurant r ON m.ResId = r.Id WHERE r.Name = 'Cafe Java'";
+        printTable(stmt.executeQuery(sql));
     }
 
-    // --- UPDATE METHOD ---
-    public static void updatePrices(Connection conn) throws SQLException {
-        String sql = "UPDATE MenuItem SET Price = 200 WHERE Price <= 100";
-        try (Statement stmt = conn.createStatement()) {
-            int rows = stmt.executeUpdate(sql);
-            System.out.println("\nUpdate complete. Rows affected: " + rows);
-        }
+    // --- METHOD: Update Prices (Update) ---
+    private static void updatePrices(Statement stmt) throws SQLException {
+        System.out.println("\n[Step 4] Updating Price <= 100 to 200...");
+        stmt.executeUpdate("UPDATE MenuItem SET Price = 200 WHERE Price <= 100");
+        printTable(stmt.executeQuery("SELECT * FROM MenuItem"));
     }
 
     // --- METHOD: Delete 'P' Items (Delete) ---
@@ -86,20 +91,15 @@ public class RestaurantManager{
         printTable(stmt.executeQuery("SELECT * FROM MenuItem"));
     }
 
-    // --- UTILITY METHOD TO PRINT TABLES ---
-    private static void printResultSet(Connection conn, String query) throws SQLException {
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int cols = rsmd.getColumnCount();
-
-            while (rs.next()) {
-                for (int i = 1; i <= cols; i++) {
-                    System.out.print(rsmd.getColumnName(i) + ": " + rs.getString(i) + " | ");
-                }
-                System.out.println();
-            }
+    // --- METHOD: Tabular Print Helper ---
+    private static void printTable(ResultSet rs) throws SQLException {
+        ResultSetMetaData md = rs.getMetaData();
+        int cols = md.getColumnCount();
+        for (int i = 1; i <= cols; i++) System.out.print(String.format("%-15s", md.getColumnName(i)));
+        System.out.println("\n------------------------------------------------------------");
+        while (rs.next()) {
+            for (int i = 1; i <= cols; i++) System.out.print(String.format("%-15s", rs.getString(i)));
+            System.out.println();
         }
     }
 }
